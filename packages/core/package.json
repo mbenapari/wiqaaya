@@ -1,0 +1,19 @@
+{
+  "name": "@wiqaaya/core",
+  "version": "0.1.0",
+  "main": "dist/index.cjs",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "type": "module",
+  "scripts": {
+    "build": "tsup src/index.ts --format esm,cjs --dts",
+    "dev": "tsup src/index.ts --watch --format esm,cjs --dts"
+  },
+  "dependencies": {},
+  "peerDependencies": {
+    "express": "^4 || ^5"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21"
+  }
+}

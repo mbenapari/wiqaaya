@@ -1,0 +1,12 @@
+{
+  "name": "wiqaaya",
+  "private": true,
+  "version": "0.0.0",
+  "workspaces": [
+    "packages/*"
+  ],
+  "devDependencies": {
+    "typescript": "^5.4.0",
+    "tsup": "^8.0.0"
+  }
+}
