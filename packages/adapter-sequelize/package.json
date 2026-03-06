@@ -8,10 +8,8 @@
   "scripts": {
     "build": "tsup src/index.ts --format esm,cjs --dts"
   },
-  "dependencies": {
-    "@wiqaaya/core": "workspace:*"
-  },
   "peerDependencies": {
-    "sequelize": "^6"
+    "sequelize": "^6",
+    "@wiqaaya/core": "*"
   }
 }
