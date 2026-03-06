@@ -1,34 +1,52 @@
 import express from "express"
-import { Sequelize, DataTypes } from "sequelize"
 
 import {
   wiqaaya,
   secureRoute,
-  wiqaayaErrorHandler
+  wiqaayaErrorHandler,
+  WiqaayaAdapter
 } from "@wiqaaya/core"
-
-import { sequelizeAdapter } from "@wiqaaya/adapter-sequelize"
 
 const app = express()
 app.use(express.json())
 
-// --- DATABASE ---
-const sequelize = new Sequelize({
-  dialect: "sqlite",
-  storage: ":memory:"
-})
-
-// Example payment model
-const Payment = sequelize.define("Payment", {
-  amount: {
-    type: DataTypes.INTEGER,
-    allowNull: false
+// --- MOCK ADAPTER (for demo; swap with sequelizeAdapter for production) ---
+const mockAdapter: WiqaayaAdapter = {
+  transaction: {
+    async begin() {
+      return { txId: Math.random() }
+    },
+    async commit() {},
+    async rollback() {}
+  },
+  idempotency: {
+    async find() {
+      return null // no stored idempotency
+    },
+    async insert() {
+      // no-op
+    },
+    async delete() {
+      // no-op
+    }
+  },
+  audit: {
+    async insert() {
+      // no-op; in production, this persists to the audit table
+    }
+  },
+  isUniqueConstraintError() {
+    return false
   }
-})
+}
+
+// --- IN-MEMORY PAYMENT STORE (for demo) ---
+let paymentId = 0
+const payments: Record<number, { id: number; amount: number }> = {}
 
 // --- WIQAAYA INIT ---
 wiqaaya({
-  adapter: sequelizeAdapter(sequelize),
+  adapter: mockAdapter,
   strictMode: true,
   idempotency: {
     enabled: true,
@@ -60,19 +78,20 @@ app.post(
     async (req, ctx) => {
       const { amount } = req.body
 
-      const payment = await Payment.create(
-        { amount },
-        { transaction: ctx.transaction as any }
-      )
+      // Store payment in memory (for demo)
+      const id = ++paymentId
+      payments[id] = { id, amount }
 
+      // Log audit event
       ctx.audit.log({
         action: "CREATE_PAYMENT",
         metadata: { amount }
       })
 
       return {
-        id: payment.get("id"),
-        amount
+        id,
+        amount,
+        message: "Payment created (mock adapter, in-memory storage)"
       }
     }
   )
@@ -83,9 +102,8 @@ app.use(wiqaayaErrorHandler)
 
 // --- START ---
 async function start() {
-  await sequelize.sync()
   app.listen(3000, () =>
-    console.log("Server running on port 3000")
+    console.log("🚀 Server running on http://localhost:3000")
   )
 }
 
